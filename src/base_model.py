@@ -101,7 +101,9 @@ class ModelFactory:
         attrs = list(model.__dataclass_fields__.keys())
         for attr in attrs:
             type_cast = model.__dataclass_fields__[attr].type
-            if type_cast == datetime:
+            if not data[attr]:
+                cast_attrs[attr] = None
+            elif type_cast == datetime:
                 cast_attrs[attr] = datetime.fromisoformat(data[attr])
             else:
                 cast_attrs[attr] = type_cast(data[attr])
