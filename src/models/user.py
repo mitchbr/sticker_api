@@ -1,7 +1,8 @@
-from src.base_model import BaseQuerySet, BaseModel
-from uuid import uuid4, UUID
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
+from uuid import UUID, uuid4
+
+from src.base_model import BaseQuerySet
 
 
 class UserQuerySet(BaseQuerySet):
@@ -12,7 +13,7 @@ class UserQuerySet(BaseQuerySet):
 
 
 @dataclass
-class User(BaseModel):
+class User:
     id: UUID = uuid4()
     first_name: str = ""
     last_name: str = ""

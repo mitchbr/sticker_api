@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from fastapi import APIRouter
+
 from .base_model import ModelFactory
 
 
@@ -19,21 +22,36 @@ class BaseRouter:
         )
         self.router.add_api_route(self.path, self.create, methods=["POST"])
 
+    def to_json(self, item):
+        serialized_data = {}
+        for key in item.keys():
+            if key == "_id":
+                serialized_data["id"] = str(item[key])
+            elif type(item[key]) == datetime:
+                serialized_data[key] = item[key].isoformat()
+            else:
+                serialized_data[key] = item[key]
+
+        return serialized_data
+
     def get_collection(self):
+        # TODO: Filtering
         collection = self.queryset.filter()
         serialized_collection = []
         for item in collection:
-            serialized_collection.append(item.to_json())
+            serialized_collection.append(self.to_json(item))
         return {"data": serialized_collection}
 
     def fetch(self, id):
-        item = self.queryset.get(id)
+        item = self.to_json(self.queryset.get(id))
         return {"data": item}
 
     def partial_update(self, id, item: dict):
         item = self.queryset.partial_update(id, item)
-        return {"data": item}
+        item_json = self.to_json(item)
+        return {"data": item_json}
 
     def create(self, item):
-        res = self.queryset.create(item)
-        return res
+        item = self.queryset.create(item)
+        item_json = self.to_json(item)
+        return {"data": item_json}

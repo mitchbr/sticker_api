@@ -1,7 +1,8 @@
-from src.base_model import BaseQuerySet, BaseModel
-from uuid import uuid4, UUID
 from dataclasses import dataclass
 from datetime import datetime
+from uuid import UUID, uuid4
+
+from src.base_model import BaseQuerySet
 
 
 class StickQuerySet(BaseQuerySet):
@@ -12,7 +13,7 @@ class StickQuerySet(BaseQuerySet):
 
 
 @dataclass
-class Stick(BaseModel):
+class Stick:
     id: UUID = uuid4()
     created_at: datetime = datetime.now()
     last_seen_at: datetime = datetime.now()

@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "stickie-db"
+version = "0.1.0"
+description = ""
+authors = ["Mitchell Brown <mitchell.dee.brown@gmail.com>"]
+readme = "README.md"
+packages = []
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.111.0"
+uvicorn = { version = "^0.29.0", extras = ["standard"] }
+httpx = "^0.27.0"
+rich = "^13.7.1"
+uvloop = "^0.19.0"
+httptools = "^0.6.1"
+pymongo = "^4.8.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

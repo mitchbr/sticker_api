@@ -1,7 +1,8 @@
-from src.base_model import BaseQuerySet, BaseModel
-from uuid import uuid4, UUID
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
+from uuid import UUID, uuid4
+
+from src.base_model import BaseQuerySet
 
 
 class StickerQuerySet(BaseQuerySet):
@@ -15,8 +16,7 @@ class StickerQuerySet(BaseQuerySet):
 
 
 @dataclass
-class Sticker(BaseModel):
-    id: UUID = uuid4()
+class Sticker:
     created_at: datetime = datetime.now()
     deleted_at: datetime = datetime.now()
     title: str = ""

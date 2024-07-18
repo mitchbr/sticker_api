@@ -1,97 +1,51 @@
 import json
+import os
 from datetime import datetime, timezone
-from dataclasses import dataclass
-from uuid import UUID
 
-
-@dataclass
-class BaseModel:
-    def to_json(self):
-        data_dict = self.__dict__
-        serialized_data = {}
-        for key in data_dict.keys():
-            if type(data_dict[key]) == UUID:
-                serialized_data[key] = str(data_dict[key])
-            elif type(data_dict[key]) == datetime:
-                serialized_data[key] = data_dict[key].isoformat()
-            else:
-                serialized_data[key] = data_dict[key]
-
-        return serialized_data
+import pymongo
+from bson import ObjectId
 
 
 class BaseQuerySet:
     def __init__(self, table, model) -> None:
         self.table = table
         self.model = model
-
-    def _get_raw_data(self):
-        with open(f"src/data/{self.table}.json") as f:
-            return json.load(f)
-
-    def _load_data(self):
-        return self._deserialize(self._get_raw_data())
+        mongo_url = os.environ.get("MONGO_URL")
+        mongo_client = pymongo.MongoClient(mongo_url)
+        db_name = os.environ.get("DB_NAME")
+        self.db = mongo_client[db_name]
+        self.collection = self.db[self.table]
 
     def _get_item_by_id(self, id):
-        data = self._load_data()
-        for item in data:
-            if str(item.id) == id:
-                return item
-
-    def _deserialize(self, raw_data):
-        items = []
-        for row in raw_data["data"]:
-            items.append(ModelFactory().build_item(self.model, row))
-        return items
+        return self.collection.find_one({"_id": ObjectId(id)})
 
     def filter(self):
-        return self._load_data()
+        query = {}
+        return self.collection.find(query)
 
     def get(self, id):
         return self._get_item_by_id(id)
 
     def create(self, item):
-        json_data = self.model.to_json(item)
-        raw_data = self._get_raw_data()
-        raw_data["data"].append(json_data)
-        with open(f"src/data/{self.table}.json", "w") as outfile:
-            json.dump(raw_data, outfile)
+        result = self.collection.insert_one(item)
+        item = self._get_item_by_id(result.inserted_id)
         return item
 
     def partial_update(self, id, data):
+        query = {"_id": ObjectId(id)}
+        update_query = {"$set": data}
+        result = self.collection.update_one(query, update_query)
+        # TODO: Use result
         item = self._get_item_by_id(id)
-        for attr in data.keys():
-            if not hasattr(item, attr):
-                return None
-            # TODO: deserialize correctly
-            setattr(item, attr, data[attr])
-
-        raw_data = self._get_raw_data()
-        for index, entry in enumerate(raw_data["data"]):
-            if entry["id"] == id:
-                raw_data["data"][index] = self.model.to_json(item)
-                continue
-
-        with open(f"src/data/{self.table}.json", "w") as outfile:
-            json.dump(raw_data, outfile)
-
         return item
 
     def delete(self, id):
+        query = {"_id": ObjectId(id)}
+        update_query = {"$set": {"deleted_at": datetime.now(timezone.utc)}}
+        result = self.collection.update_one(query, update_query)
+        # TODO: Use result
+
         item = self._get_item_by_id(id)
-        if not item:
-            return
-        item.deleted_at = datetime.now(timezone.utc)
-
-        raw_data = self._get_raw_data()
-        for index, entry in enumerate(raw_data["data"]):
-            if entry["id"] == id:
-                raw_data["data"][index] = self.model.to_json(item)
-                continue
-
-        with open(f"src/data/{self.table}.json", "w") as outfile:
-            json.dump(raw_data, outfile)
-
         return item
 
 
